@@ -195,7 +195,51 @@ app.get('/health', (req, res) => {
     });
 });
 
+//  Agent Login
+app.post('/api/agents/:code/login', (req, res) => {
+    const agentCode = req.params.code;
+    const { name } = req.body;
 
+    // 1. หา agent
+    let agent = agents.find(a => a.code === agentCode);
+
+    // 2. ถ้าไม่เจอ → สร้างใหม่
+    if (!agent) {
+        agent = { code: agentCode, name: name, status: "Available" };
+        agents.push(agent);
+    }
+
+    // 3. ถ้ามีอยู่แล้ว → อัปเดตชื่อ และเปลี่ยนเป็น Available
+    agent.name = name || agent.name;
+    agent.status = "Available";
+    agent.loginTime = new Date().toISOString();
+
+    res.json({
+        success: true,
+        message: `Agent ${agentCode} logged in`,
+        data: agent
+    });
+});
+
+
+//  Agent Logout
+app.post('/api/agents/:code/logout', (req, res) => {
+    const agentCode = req.params.code;
+
+    const agent = agents.find(a => a.code === agentCode);
+    if (!agent) {
+        return res.status(404).json({ success: false, error: "Agent not found" });
+    }
+
+    agent.status = "Offline";
+    delete agent.loginTime; // ลบออก
+
+    res.json({
+        success: true,
+        message: `Agent ${agentCode} logged out`,
+        data: agent
+    });
+});
 
 
 
